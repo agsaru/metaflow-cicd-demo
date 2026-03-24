@@ -25,7 +25,7 @@ jobs:
           python -m pip install tox metaflow
       - name: Start dev stack
         run: |
-          MINIKUBE_CPUS=2 SERVICES_OVERRIDE="metadata-service,argo-workflows" metaflow-dev up &
+          MINIKUBE_CPUS=2 SERVICES_OVERRIDE="metadata-service,argo-workflows,minio" metaflow-dev up &
           WAIT_TIMEOUT=600 metaflow-dev wait-until-ready
       - name: Check pods status
         run: |
