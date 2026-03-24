@@ -1,0 +1,40 @@
+name: Kubernetes and Argo Workflow Tests
+on: 
+  push: 
+    branches: [main]
+  pull_request: 
+    branches: [main]
+jobs:
+  test-kubernetes:
+    runs-on: ubuntu-latest
+    strategy: 
+      fail-fast: false
+      matrix:
+        python-version: ["3.9","3.10", "3.11", "3.12", "3.13","3.14"]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+      - name: Setup Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+      - name: Install tox
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install tox
+      - name: Start dev stack
+        run: |
+          MINIKUBE_CPUS=2 metaflow-dev all-up &
+          WAIT_TIMEOUT=600 metaflow-dev wait-until-ready
+
+      - name: Run tests
+        run: |
+          cat <<'EOF' | metaflow-dev shell
+          tox -e kubernetes
+          tox -e argo
+          EOF
+
+      - name: Teardown
+        if: always()
+        run: metaflow-dev down
